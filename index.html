@@ -1144,7 +1144,8 @@
                 }
                 
                 this.season++;
-                this.teams = this.generateTeams();
+                // Ne pas régénérer les équipes pour conserver la progression
+                // this.teams = this.generateTeams();
                 this.sponsorOffers = this.generateSponsorOffers();
                 this.initializeChampionship();
                 
