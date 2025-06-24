@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sailing Manager Tycoon</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298, #74b9ff);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.9);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2d3436;
+        }
+
+        .stat-label {
+            color: #636e72;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.95);
+            padding: 18px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .panel h3 {
+            margin-bottom: 15px;
+            color: #2d3436;
+            border-bottom: 2px solid #74b9ff;
+            padding-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .boat-card {
+            background: #f8f9fa;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+            border-left: 4px solid #74b9ff;
+        }
+
+        .boat-name {
+            font-weight: bold;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+
+        .boat-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .boat-stat {
+            text-align: center;
+            padding: 6px;
+            background: white;
+            border-radius: 5px;
+            font-size: 0.8em;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #74b9ff, #0984e3);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 3px;
+            font-size: 0.85em;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            background: #b2bec3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-expensive {
+            background: linear-gradient(45deg, #fd79a8, #e84393);
+        }
+
+        .btn-very-expensive {
+            background: linear-gradient(45deg, #fdcb6e, #e17055);
+        }
+
+        .btn-sponsor {
+            background: linear-gradient(45deg, #00b894, #00cec9);
+        }
+
+        .upgrade-category {
+            background: #f1f2f6;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+
+        .upgrade-category h4 {
+            color: #2d3436;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .upgrade-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+
+        .championship-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .championship-table th,
+        .championship-table td {
+            padding: 6px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 0.8em;
+        }
+
+        .championship-table th {
+            background: #74b9ff;
+            color: white;
+        }
+
+        .promotion {
+            background: #00b894 !important;
+            color: white;
+        }
+
+        .relegation {
+            background: #e17055 !important;
+            color: white;
+        }
+
+        .current-team {
+            background: #fdcb6e !important;
+            font-weight: bold;
+        }
+
+        .race-simulation {
+            background: #2d3436;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            max-height: 250px;
+            overflow-y: auto;
+            font-size: 0.8em;
+        }
+
+        .race-result {
+            background: #e8f4fd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #74b9ff;
+            font-size: 0.9em;
+        }
+
+        .level-indicator {
+            background: linear-gradient(45deg, #fd79a8, #e84393);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 8px 0;
+            font-size: 0.9em;
+        }
+
+        .money {
+            color: #00b894;
+            font-weight: bold;
+        }
+
+        .sponsor-card {
+            background: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sponsor-card:hover {
+            border-color: #74b9ff;
+            transform: translateY(-2px);
+        }
+
+        .sponsor-card.selected {
+            border-color: #00b894;
+            background: #e8f5e8;
+        }
+
+        .sponsor-card.current {
+            border-color: #fdcb6e;
+            background: #fff9e6;
+        }
+
+        .sponsor-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .sponsor-objective {
+            font-size: 0.85em;
+            color: #636e72;
+            margin: 3px 0;
+        }
+
+        .sponsor-reward {
+            color: #00b894;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .revenue-item {
+            background: #e8f5e8;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+        }
+
+        .weather-info {
+            background: #636e72;
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            margin: 8px 0;
+            text-align: center;
+            font-size: 0.85em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 3px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #00b894, #00cec9);
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 1400px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 Sailing Manager Tycoon V4+ Infinite</h1>
+            <div class="level-indicator" id="levelIndicator">Niveau Amateur</div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value money" id="money">€500,000</div>
+                    <div class="stat-label">Budget</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value money" id="passiveIncome">€0/saison</div>
+                    <div class="stat-label">Revenus Passifs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="reputation">50</div>
+                    <div class="stat-label">Réputation</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="season">1</div>
+                    <div class="stat-label">Saison</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="position">8</div>
+                    <div class="stat-label">Position</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="currentSponsor">Aucun</div>
+                    <div class="stat-label">Sponsor</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <h3>🚤 Mes Voiliers</h3>
+                <div id="boatsContainer"></div>
+            </div>
+
+            <div class="panel">
+                <h3>🔧 Améliorations</h3>
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <strong>Voilier: <span id="selectedBoat">Vent Marin</span></strong>
+                </div>
+                
+                <div class="upgrade-category">
+                    <h4>⚡ Améliorations Voilier</h4>
+                    <div class="upgrade-grid">
+                        <button class="btn" onclick="upgradeComponent('coque')">Coque Pro (€75k)</button>
+                        <button class="btn" onclick="upgradeComponent('voiles')">Voiles Carbon (€85k)</button>
+                        <button class="btn" onclick="upgradeComponent('navigation')">GPS Pro (€45k)</button>
+                        <button class="btn" onclick="upgradeComponent('electronique')">Électronique (€65k)</button>
+                        <button class="btn btn-expensive" onclick="upgradeComponent('quille')">Quille Titan (€120k)</button>
+                        <button class="btn btn-expensive" onclick="upgradeComponent('mat')">Mât Carbone (€150k)</button>
+                        <button class="btn btn-very-expensive" onclick="hireCrew('expert')">Équipage Expert (€200k)</button>
+                        <button class="btn btn-very-expensive" onclick="hireCrew('champion')">Skipper Champion (€350k)</button>
+                    </div>
+                </div>
+
+                <div class="upgrade-category">
+                    <h4>🚤 Achats Voiliers</h4>
+                    <div class="upgrade-grid">
+                        <button class="btn btn-expensive" onclick="buyBoat('sport')">Voilier Sport (€400k)</button>
+                        <button class="btn btn-very-expensive" onclick="buyBoat('racing')">Voilier Racing (€800k)</button>
+                        <button class="btn btn-very-expensive" onclick="buyBoat('prototype')">Prototype (€1.5M)</button>
+                    </div>
+                </div>
+
+                <div class="upgrade-category">
+                    <h4>🏢 Infrastructure</h4>
+                    <div class="upgrade-grid">
+                        <button class="btn" onclick="upgradeBase('formation')">Centre Formation (€300k)</button>
+                        <button class="btn" onclick="upgradeBase('recherche')">Labo R&D (€500k)</button>
+                        <button class="btn btn-expensive" onclick="upgradeBase('installations')">Installations (€750k)</button>
+                    </div>
+                </div>
+
+                <div class="upgrade-category">
+                    <h4>🔥 Vente Voiliers</h4>
+                    <div class="upgrade-grid">
+                        <button class="btn" style="background: #e74c3c;" onclick="sellBoat(0)">🔥 Vendre Voilier 1</button>
+                        <button class="btn" style="background: #e74c3c;" onclick="sellBoat(1)">🔥 Vendre Voilier 2</button>
+                    </div>
+                </div>
+
+                <div class="upgrade-category">
+                    <h4>⚙️ Système</h4>
+                    <div class="upgrade-grid">
+                        <button class="btn" style="background: #636e72;" onclick="saveGameManually()">💾 Sauvegarder</button>
+                        <button class="btn" style="background: #d63031;" onclick="resetGame()">🔄 Nouvelle Partie</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>🏢 Sponsors & Revenus</h3>
+                
+                <div id="currentSponsorInfo" style="margin-bottom: 15px;"></div>
+                
+                <h4 style="margin: 10px 0;">Contrats Disponibles:</h4>
+                <div id="sponsorOffers"></div>
+                
+                <h4 style="margin: 15px 0 10px;">💰 Revenus Passifs:</h4>
+                <div id="passiveRevenues"></div>
+                
+                <div class="upgrade-grid" style="margin-top: 15px;">
+                    <button class="btn btn-sponsor" onclick="upgradeRevenue('merchandising')">Boutique (€200k)</button>
+                    <button class="btn btn-sponsor" onclick="upgradeRevenue('events')">Événements (€300k)</button>
+                    <button class="btn btn-sponsor" onclick="upgradeRevenue('school')">École Voile (€400k)</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>🏁 Championnat</h3>
+                <div id="championshipLevel"></div>
+                
+                <div class="weather-info" id="weatherInfo">
+                    🌊 Conditions: Vent modéré, Mer calme
+                </div>
+                
+                <table class="championship-table">
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th>Équipe</th>
+                            <th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="championshipTable"></tbody>
+                </table>
+
+                <button class="btn" onclick="runRace()" id="raceBtn">🏁 Courir la Course</button>
+                <button class="btn" onclick="nextSeason()" id="seasonBtn" style="display:none;">Nouvelle Saison</button>
+                
+                <div id="raceSimulation" class="race-simulation" style="display:none;"></div>
+                <div id="raceResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SailingTycoon {
+            constructor() {
+                this.money = 500000;
+                this.reputation = 50;
+                this.season = 1;
+                this.level = 0;
+                this.levelNames = ["Amateur", "Semi-Pro", "Professionnel", "Elite", "Super Elite", "Championnat du Monde", "Légendes"];
+                this.raceCount = 0;
+                this.maxRaces = 10;
+                this.selectedBoatIndex = 0;
+                
+                this.baseUpgrades = {
+                    formation: 0,
+                    recherche: 0,
+                    installations: 0
+                };
+                
+                this.passiveRevenues = {
+                    merchandising: 0,
+                    events: 0,
+                    school: 0
+                };
+                
+                this.currentSponsor = null;
+                
+                this.boats = [
+                    {
+                        name: "Vent Marin",
+                        type: "basic",
+                        coque: 50,
+                        voiles: 45,
+                        navigation: 40,
+                        electronique: 35,
+                        quille: 45,
+                        mat: 40,
+                        crew: 40,
+                        skipper: 30
+                    }
+                ];
+                
+                // CHARGER LA SAUVEGARDE EN PREMIER
+                this.loadGame();
+                
+                this.sponsorOffers = this.generateSponsorOffers();
+                this.teams = this.generateTeams();
+                this.weather = this.generateWeather();
+                this.initializeChampionship();
+                this.updateDisplay();
+            }
+
+            // SYSTÈME DE SAUVEGARDE
+            saveGame() {
+                try {
+                    const gameData = {
+                        money: this.money,
+                        reputation: this.reputation,
+                        season: this.season,
+                        level: this.level,
+                        raceCount: this.raceCount,
+                        selectedBoatIndex: this.selectedBoatIndex,
+                        baseUpgrades: this.baseUpgrades,
+                        passiveRevenues: this.passiveRevenues,
+                        currentSponsor: this.currentSponsor,
+                        boats: this.boats,
+                        teams: this.teams
+                    };
+                    
+                    localStorage.setItem('sailingTycoonSave', JSON.stringify(gameData));
+                    console.log("Jeu sauvegardé avec succès!");
+                } catch (error) {
+                    console.error("Erreur de sauvegarde:", error);
+                }
+            }
+
+            loadGame() {
+                try {
+                    const savedData = localStorage.getItem('sailingTycoonSave');
+                    if (savedData) {
+                        const gameData = JSON.parse(savedData);
+                        
+                        // Charger toutes les données
+                        this.money = gameData.money || 500000;
+                        this.reputation = gameData.reputation || 50;
+                        this.season = gameData.season || 1;
+                        this.level = gameData.level || 0;
+                        this.raceCount = gameData.raceCount || 0;
+                        this.selectedBoatIndex = gameData.selectedBoatIndex || 0;
+                        this.baseUpgrades = gameData.baseUpgrades || { formation: 0, recherche: 0, installations: 0 };
+                        this.passiveRevenues = gameData.passiveRevenues || { merchandising: 0, events: 0, school: 0 };
+                        this.currentSponsor = gameData.currentSponsor || null;
+                        this.boats = gameData.boats || this.boats;
+                        this.teams = gameData.teams || [];
+                        
+                        console.log("Jeu chargé avec succès!");
+                        console.log("Progression:", `Saison ${this.season}, Niveau ${this.levelNames[this.level]}, €${this.money.toLocaleString()}`);
+                    } else {
+                        console.log("Aucune sauvegarde trouvée, nouvelle partie");
+                    }
+                } catch (error) {
+                    console.error("Erreur de chargement:", error);
+                    console.log("Démarrage d'une nouvelle partie");
+                }
+            }
+
+            resetGame() {
+                if (confirm("⚠️ Êtes-vous sûr de vouloir recommencer une nouvelle partie ?\n\nToute votre progression sera perdue !")) {
+                    localStorage.removeItem('sailingTycoonSave');
+                    location.reload(); // Recharger la page pour redémarrer
+                }
+            }
+
+            // NOUVELLES FONCTIONS POUR PRIX EXPONENTIELS
+            getUpgradeCost(component, currentLevel) {
+                const baseCosts = {
+                    'coque': 75000, 'voiles': 85000, 'navigation': 45000,
+                    'electronique': 65000, 'quille': 120000, 'mat': 150000
+                };
+                
+                const baseCost = baseCosts[component] || 75000;
+                const baseLevel = 50; // Niveau de départ
+                
+                if (currentLevel <= baseLevel) {
+                    return baseCost;
+                }
+                
+                // Prix exponentiel : base × (1.3 ^ (niveau - base))
+                const multiplier = Math.pow(1.3, currentLevel - baseLevel);
+                return Math.round(baseCost * multiplier);
+            }
+
+            getCrewCost(type, currentLevel) {
+                const baseCosts = { 'expert': 200000, 'champion': 350000 };
+                const baseLevels = { 'expert': 40, 'champion': 30 };
+                
+                const baseCost = baseCosts[type];
+                const baseLevel = baseLevels[type];
+                
+                if (currentLevel <= baseLevel) {
+                    return baseCost;
+                }
+                
+                const multiplier = Math.pow(1.4, currentLevel - baseLevel);
+                return Math.round(baseCost * multiplier);
+            }
+
+            getBaseCost(type, level) {
+                const baseCosts = { 'formation': 300000, 'recherche': 500000, 'installations': 750000 };
+                const baseCost = baseCosts[type] || 300000;
+                
+                const multiplier = Math.pow(1.25, level);
+                return Math.round(baseCost * multiplier);
+            }
+
+            upgradeComponent(component) {
+                if (!this.boats[this.selectedBoatIndex]) {
+                    alert("Sélectionnez d'abord un voilier!");
+                    return;
+                }
+                
+                const boat = this.boats[this.selectedBoatIndex];
+                const currentLevel = boat[component];
+                const cost = this.getUpgradeCost(component, currentLevel);
+                
+                if (this.money >= cost) {
+                    this.money -= cost;
+                    boat[component] = Math.min(999, boat[component] + 15); // Maximum 999
+                    this.reputation += 2;
+                    this.saveGame(); // SAUVEGARDE AUTOMATIQUE
+                    this.updateDisplay();
+                    alert(`${component} amélioré! +15 points (niveau ${Math.round(boat[component])})\nCoût: €${cost.toLocaleString()}`);
+                } else {
+                    alert(`Fonds insuffisants! Coût: €${cost.toLocaleString()}`);
+                }
+            }
+
+            hireCrew(type) {
+                if (!this.boats[this.selectedBoatIndex]) {
+                    alert("Sélectionnez d'abord un voilier!");
+                    return;
+                }
+                
+                const boat = this.boats[this.selectedBoatIndex];
+                const currentLevel = type === 'expert' ? boat.crew : boat.skipper;
+                const cost = this.getCrewCost(type, currentLevel);
+                const improvement = type === 'expert' ? 20 : 35;
+                
+                if (this.money >= cost) {
+                    this.money -= cost;
+                    
+                    if (type === 'expert') {
+                        boat.crew = Math.min(999, boat.crew + improvement);
+                    } else {
+                        boat.skipper = Math.min(999, boat.skipper + improvement);
+                    }
+                    
+                    this.reputation += 5;
+                    this.saveGame(); // SAUVEGARDE AUTOMATIQUE
+                    this.updateDisplay();
+                    alert(`${type} recruté! +${improvement} points (niveau ${Math.round(type === 'expert' ? boat.crew : boat.skipper)})\nCoût: €${cost.toLocaleString()}`);
+                } else {
+                    alert(`Fonds insuffisants! Coût: €${cost.toLocaleString()}`);
+                }
+            }
+
+            upgradeBase(type) {
+                const cost = this.getBaseCost(type, this.baseUpgrades[type]);
+                
+                if (this.money >= cost) {
+                    this.money -= cost;
+                    this.baseUpgrades[type]++;
+                    this.reputation += 8;
+                    this.saveGame(); // SAUVEGARDE AUTOMATIQUE
+                    this.updateDisplay();
+                    alert(`${type} amélioré! Niveau ${this.baseUpgrades[type]}\nCoût: €${cost.toLocaleString()}`);
+                } else {
+                    alert(`Fonds insuffisants! Coût: €${cost.toLocaleString()}`);
+                }
+            }
+
+            sellBoat(boatIndex) {
+                if (this.boats.length <= 1) {
+                    alert("Impossible de vendre votre dernier voilier!");
+                    return;
+                }
+                
+                if (boatIndex >= this.boats.length) {
+                    alert("Ce voilier n'existe plus!");
+                    return;
+                }
+                
+                const boat = this.boats[boatIndex];
+                const baseValues = { 'basic': 60000, 'sport': 240000, 'racing': 480000, 'prototype': 900000 };
+                const sellPrice = baseValues[boat.type] || 60000;
+                
+                this.money += sellPrice;
+                const soldBoat = this.boats.splice(boatIndex, 1)[0];
+                
+                if (this.selectedBoatIndex >= this.boats.length) {
+                    this.selectedBoatIndex = this.boats.length - 1;
+                }
+                if (this.selectedBoatIndex === boatIndex && boatIndex > 0) {
+                    this.selectedBoatIndex = boatIndex - 1;
+                }
+                
+                this.reputation += 1;
+                this.saveGame(); // SAUVEGARDE AUTOMATIQUE
+                this.updateDisplay();
+                alert(`✅ ${soldBoat.name} vendu pour €${sellPrice.toLocaleString()}!\n\nNouveau budget: €${this.money.toLocaleString()}`);
+            }
+
+            generateSponsorOffers() {
+                const sponsors = [
+                    {
+                        name: "TechMarine Local",
+                        level: "local",
+                        objective: "Finir dans les 8 premiers",
+                        reward: 60000,
+                        requirement: 8,
+                        minLevel: 0
+                    },
+                    {
+                        name: "OcéanBlue Regional",
+                        level: "local", 
+                        objective: "3 podiums minimum",
+                        reward: 90000,
+                        requirement: 3,
+                        type: "podiums",
+                        minLevel: 0
+                    },
+                    {
+                        name: "WindPower National",
+                        level: "national",
+                        objective: "Finir dans les 5 premiers", 
+                        reward: 200000,
+                        requirement: 5,
+                        minLevel: 1
+                    },
+                    {
+                        name: "GlobalSailing Elite",
+                        level: "national",
+                        objective: "2 victoires minimum",
+                        reward: 350000,
+                        requirement: 2,
+                        type: "victories",
+                        minLevel: 2
+                    },
+                    {
+                        name: "Cosmic Corporation",
+                        level: "international",
+                        objective: "Top 3 du championnat",
+                        reward: 750000,
+                        requirement: 3,
+                        minLevel: 3
+                    },
+                    {
+                        name: "Legendary Sponsors",
+                        level: "legendary",
+                        objective: "Champion absolu",
+                        reward: 3000000,
+                        requirement: 1,
+                        minLevel: 5
+                    }
+                ];
+                
+                return sponsors.filter(sponsor => {
+                    const levelOk = this.level >= sponsor.minLevel;
+                    const reputationOk = (
+                        (sponsor.level === "local" && this.reputation >= 30) ||
+                        (sponsor.level === "national" && this.reputation >= 60) ||
+                        (sponsor.level === "international" && this.reputation >= 85) ||
+                        (sponsor.level === "legendary" && this.reputation >= 100)
+                    );
+                    return levelOk && reputationOk;
+                });
+            }
+
+            selectSponsor(sponsorIndex) {
+                this.currentSponsor = {...this.sponsorOffers[sponsorIndex]};
+                this.currentSponsor.podiums = 0;
+                this.currentSponsor.victories = 0;
+                this.currentSponsor.currentPoints = 0;
+                this.updateDisplay();
+                alert(`Contrat signé avec ${this.currentSponsor.name}!`);
+            }
+
+            checkSponsorObjectives() {
+                if (!this.currentSponsor) return;
+                
+                const playerPosition = this.teams.sort((a, b) => b.points - a.points).findIndex(t => t.isPlayer) + 1;
+                const playerPoints = this.teams.find(t => t.isPlayer).points;
+                let objectiveReached = false;
+                
+                if (this.currentSponsor.type === "podiums") {
+                    objectiveReached = this.currentSponsor.podiums >= this.currentSponsor.requirement;
+                } else if (this.currentSponsor.type === "victories") {
+                    objectiveReached = this.currentSponsor.victories >= this.currentSponsor.requirement;
+                } else if (this.currentSponsor.type === "points") {
+                    objectiveReached = playerPoints >= this.currentSponsor.requirement;
+                } else {
+                    objectiveReached = playerPosition <= this.currentSponsor.requirement;
+                }
+                
+                if (objectiveReached) {
+                    this.money += this.currentSponsor.reward;
+                    alert(`🎉 Objectif sponsor atteint! +€${this.currentSponsor.reward.toLocaleString()}`);
+                } else {
+                    alert(`😔 Objectif sponsor non atteint. Pas de bonus cette saison.`);
+                }
+                
+                this.currentSponsor = null;
+            }
+
+            getPassiveIncome() {
+                return (this.passiveRevenues.merchandising * 15000) + 
+                       (this.passiveRevenues.events * 25000) + 
+                       (this.passiveRevenues.school * 35000);
+            }
+
+            upgradeRevenue(type) {
+                const costs = { 'merchandising': 200000, 'events': 300000, 'school': 400000 };
+                const cost = costs[type];
+                
+                if (this.money >= cost) {
+                    this.money -= cost;
+                    this.passiveRevenues[type]++;
+                    this.reputation += 3;
+                    this.updateDisplay();
+                    alert(`${type} amélioré! Niveau ${this.passiveRevenues[type]}`);
+                } else {
+                    alert("Fonds insuffisants!");
+                }
+            }
+
+            generateWeather() {
+                const conditions = [
+                    { wind: "Vent faible", sea: "Mer calme", modifier: 0.9 },
+                    { wind: "Vent modéré", sea: "Mer calme", modifier: 1.0 },
+                    { wind: "Vent fort", sea: "Mer agitée", modifier: 1.1 },
+                    { wind: "Vent violent", sea: "Mer déchaînée", modifier: 1.2 },
+                    { wind: "Alizés", sea: "Mer belle", modifier: 1.05 }
+                ];
+                return conditions[Math.floor(Math.random() * conditions.length)];
+            }
+
+            generateTeams() {
+                const teamPools = {
+                    0: ["Écume Locale", "Vent du Port", "Club Nautique", "Voile École", "Petit Marin", "Brise Marine", "Mouette Bleue", "Novice Team", "Apprenti Mer", "Caboteur", "Débutant Racing"],
+                    1: ["Océan Bleu", "Tempête Rouge", "Écume Dorée", "Vague Verte", "Alizé Rapide", "Sirène Racing", "Mistral Team", "Cyclone Marin", "Brise Forte", "Mer d'Argent", "Voile Pro"],
+                    2: ["Kraken Team", "Poseidon Racing", "Tsunami Force", "Ouragan Bleu", "Tornade Océan", "Triton Elite", "Tempête Noire", "Maelström", "Léviathan", "Abyssal Racing", "Hydra Team"],
+                    3: ["Atlantis Racing", "Olympus Marine", "Titan Seas", "Valhalla Sailing", "Asgard Team", "Phoenix Ocean", "Dragon Marine", "Griffon Racing", "Chimère Team", "Sphinx Sailing", "Pegasus Ocean"],
+                    4: ["Immortal Sailing", "Infinite Ocean", "Eternal Winds", "Divine Racing", "Celestial Team", "Cosmic Sailing", "Stellar Marine", "Galactic Racing", "Nebula Team", "Quantum Ocean", "Hypernova"],
+                    5: ["World Dominator", "Global Titan", "Universal Force", "Planet Master", "Earth Conqueror", "Continental King", "Worldwide Elite", "International Legend", "Global Champion", "World Ruler", "Planetary Force"],
+                    6: ["Myth Incarnate", "Legend Eternal", "Godlike Racing", "Legendary Force", "Mythical Elite", "Epic Destiny", "Heroic Legend", "Divine Myth", "Sacred Racing", "Holy Grail Team", "Ultimate Legend"]
+                };
+                
+                const teamPool = teamPools[this.level] || teamPools[0];
+                const teams = [];
+                
+                const baseDifficulty = {
+                    0: 35, 1: 45, 2: 55, 3: 65, 4: 75, 5: 85, 6: 95
+                };
+                
+                const baseSkill = baseDifficulty[this.level] || 35;
+                const variation = this.level <= 3 ? 25 : 15;
+                
+                const shuffledTeams = [...teamPool].sort(() => Math.random() - 0.5);
+                
+                for (let i = 0; i < 12; i++) {
+                    if (i === 7) {
+                        teams.push({
+                            name: "Mon Équipe",
+                            points: 0,
+                            isPlayer: true
+                        });
+                    } else {
+                        const teamIndex = i < 7 ? i : i - 1;
+                        const skillVariation = (Math.random() - 0.5) * variation;
+                        const finalSkill = Math.max(20, baseSkill + skillVariation);
+                        
+                        teams.push({
+                            name: shuffledTeams[teamIndex % shuffledTeams.length],
+                            skill: finalSkill,
+                            points: 0,
+                            isPlayer: false
+                        });
+                    }
+                }
+                
+                return teams;
+            }
+
+            getPlayerBoatSkill() {
+                const boat = this.boats[this.selectedBoatIndex];
+                const baseSkill = (boat.coque + boat.voiles + boat.navigation + boat.electronique + 
+                                boat.quille + boat.mat + boat.crew + boat.skipper) / 8;
+                
+                const typeBonus = {
+                    'basic': 0, 'sport': 5, 'racing': 15, 'prototype': 25
+                };
+                
+                const formationBonus = this.baseUpgrades.formation * 2;
+                const rechercheBonus = this.baseUpgrades.recherche * 3;
+                const installationsBonus = this.baseUpgrades.installations * 1.5;
+                
+                return baseSkill + (typeBonus[boat.type] || 0) + formationBonus + rechercheBonus + installationsBonus;
+            }
+
+            async runRace() {
+                if (this.raceCount >= this.maxRaces) return;
+                
+                document.getElementById('raceBtn').disabled = true;
+                const simulation = document.getElementById('raceSimulation');
+                simulation.style.display = 'block';
+                simulation.innerHTML = '<h4>🏁 Simulation de course en cours...</h4>';
+                
+                this.weather = this.generateWeather();
+                document.getElementById('weatherInfo').innerHTML = 
+                    `🌊 ${this.weather.wind}, ${this.weather.sea}`;
+                
+                const playerSkill = this.getPlayerBoatSkill() * this.weather.modifier;
+                
+                const participants = [];
+                participants.push({ name: "Mon Équipe", skill: playerSkill, isPlayer: true, position: 0 });
+                
+                this.teams.forEach(team => {
+                    if (!team.isPlayer) {
+                        participants.push({
+                            name: team.name,
+                            skill: team.skill * this.weather.modifier,
+                            isPlayer: false,
+                            position: 0
+                        });
+                    }
+                });
+                
+                for (let lap = 1; lap <= 5; lap++) {
+                    simulation.innerHTML += `<br><strong>=== Tour ${lap} ===</strong><br>`;
+                    await this.sleep(600);
+                    
+                    participants.forEach(participant => {
+                        const performance = Math.random() * 0.6 + 0.7;
+                        const lapProgress = (participant.skill * performance) / 60;
+                        participant.position += lapProgress;
+                        
+                        if (Math.random() < 0.1) {
+                            const events = [
+                                "problème de voile", "vent favorable", "navigation parfaite",
+                                "problème technique", "manœuvre excellente"
+                            ];
+                            const event = events[Math.floor(Math.random() * events.length)];
+                            const impact = (Math.random() - 0.5) * 0.3;
+                            participant.position += impact;
+                            
+                            simulation.innerHTML += `${participant.name}: ${event}<br>`;
+                        }
+                    });
+                    
+                    participants.sort((a, b) => b.position - a.position);
+                    
+                    participants.forEach((p, index) => {
+                        const pos = index + 1;
+                        const icon = p.isPlayer ? "🔥" : "⛵";
+                        simulation.innerHTML += `${pos}. ${icon} ${p.name}<br>`;
+                    });
+                }
+                
+                simulation.innerHTML += `<br><strong>🏁 COURSE TERMINÉE!</strong><br>`;
+                
+                let playerPosition = 0;
+                let playerPoints = 0;
+                
+                participants.forEach((participant, index) => {
+                    const position = index + 1;
+                    let points = 0;
+                    if (position === 1) points = 10;
+                    else if (position === 2) points = 8;
+                    else if (position === 3) points = 5;
+                    else if (position >= 4 && position <= 9) points = 1;
+                    
+                    if (participant.isPlayer) {
+                        playerPosition = position;
+                        playerPoints = points;
+                        this.teams.find(t => t.isPlayer).points += points;
+                        
+                        const levelMultiplier = [1, 1.5, 2, 3, 4, 6, 10][this.level] || 1;
+                        const baseGain = position <= 6 ? (7 - position) * 5000 : 2000;
+                        this.money += Math.round(baseGain * levelMultiplier);
+                        
+                        if (position <= 3) {
+                            this.reputation += 4;
+                            const podiumBonus = position === 1 ? 25000 : position === 2 ? 15000 : 10000;
+                            this.money += Math.round(podiumBonus * levelMultiplier);
+                            
+                            if (this.currentSponsor) {
+                                if (position <= 3) this.currentSponsor.podiums++;
+                                if (position === 1) this.currentSponsor.victories++;
+                            }
+                        } else if (position <= 9) {
+                            this.reputation += 1;
+                        }
+                    } else {
+                        this.teams.find(t => t.name === participant.name).points += points;
+                    }
+                });
+                
+                this.raceCount++;
+                this.displayRaceResult(playerPosition, playerPoints);
+                
+                if (this.raceCount >= this.maxRaces) {
+                    document.getElementById('raceBtn').style.display = 'none';
+                    document.getElementById('seasonBtn').style.display = 'inline-block';
+                }
+                
+                document.getElementById('raceBtn').disabled = false;
+                this.saveGame(); // SAUVEGARDE AUTOMATIQUE APRÈS COURSE
+                this.updateDisplay();
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            displayRaceResult(position, points) {
+                const container = document.getElementById('raceResults');
+                
+                const levelMultiplier = [1, 1.5, 2, 3, 4, 6, 10][this.level] || 1;
+                const baseBonus = position <= 6 ? (7 - position) * 5000 : 2000;
+                const bonus = Math.round(baseBonus * levelMultiplier);
+                
+                let podiumBonus = 0;
+                if (position === 1) podiumBonus = Math.round(25000 * levelMultiplier);
+                else if (position === 2) podiumBonus = Math.round(15000 * levelMultiplier);
+                else if (position === 3) podiumBonus = Math.round(10000 * levelMultiplier);
+                
+                let message = '';
+                if (position === 1) message = '🥇 VICTOIRE! Domination totale!';
+                else if (position === 2) message = '🥈 Excellent podium!';
+                else if (position === 3) message = '🥉 Podium mérité!';
+                else if (position <= 9) message = `✅ Dans les points! (${points} pt)`;
+                else message = '❌ Hors des points...';
+                
+                const levelBonus = this.level > 0 ? ` (x${levelMultiplier} niveau ${this.levelNames[this.level]})` : '';
+                
+                container.innerHTML = `
+                    <div class="race-result">
+                        <h4>🏁 Résultat Course ${this.raceCount}</h4>
+                        <p><strong>Position: ${position}ème</strong></p>
+                        <p><strong>Points championship: ${points}</strong></p>
+                        <p>Gains position: €${bonus.toLocaleString()}${levelBonus}</p>
+                        ${position <= 3 ? `<p style="color: #00b894;">${message} Bonus: €${podiumBonus.toLocaleString()}</p>` : 
+                          position <= 9 ? `<p style="color: #74b9ff;">${message}</p>` : 
+                          `<p style="color: #e17055;">${message}</p>`}
+                    </div>
+                `;
+            }
+
+            buyBoat(type) {
+                const costs = { 'sport': 400000, 'racing': 800000, 'prototype': 1500000 };
+                const baseStats = {
+                    'sport': { coque: 65, voiles: 70, navigation: 60, electronique: 55, quille: 65, mat: 60, crew: 50, skipper: 45 },
+                    'racing': { coque: 80, voiles: 85, navigation: 80, electronique: 75, quille: 80, mat: 85, crew: 70, skipper: 65 },
+                    'prototype': { coque: 95, voiles: 95, navigation: 90, electronique: 90, quille: 95, mat: 95, crew: 85, skipper: 80 }
+                };
+                
+                const cost = costs[type];
+                if (this.money >= cost) {
+                    this.money -= cost;
+                    const boatNames = ["Ouragan", "Typhon", "Mistral", "Zéphyr", "Simoun", "Chinook", "Sirocco", "Mousson"];
+                    const newBoat = {
+                        name: boatNames[Math.floor(Math.random() * boatNames.length)] + " " + (this.boats.length + 1),
+                        type: type,
+                        ...baseStats[type]
+                    };
+                    this.boats.push(newBoat);
+                    this.reputation += 10;
+                    this.saveGame(); // SAUVEGARDE AUTOMATIQUE
+                    this.updateDisplay();
+                    alert(`Nouveau voilier ${type} acheté: ${newBoat.name}!`);
+                } else {
+                    alert("Fonds insuffisants!");
+                }
+            }
+
+            nextSeason() {
+                if (this.currentSponsor) {
+                    this.checkSponsorObjectives();
+                }
+                
+                const passiveIncome = this.getPassiveIncome();
+                if (passiveIncome > 0) {
+                    this.money += passiveIncome;
+                    alert(`💰 Revenus passifs: +€${passiveIncome.toLocaleString()}`);
+                }
+                
+                this.teams.sort((a, b) => b.points - a.points);
+                const playerPosition = this.teams.findIndex(t => t.isPlayer) + 1;
+                
+                if (playerPosition <= 3 && this.level < 6) {
+                    const oldLevel = this.level;
+                    this.level++;
+                    
+                    const promotionRewards = {
+                        1: 100000, 2: 200000, 3: 500000, 4: 1000000, 5: 2000000, 6: 5000000
+                    };
+                    
+                    const reward = promotionRewards[this.level] || 100000;
+                    this.money += reward;
+                    this.reputation += 20;
+                    
+                    if (this.level === 6) {
+                        alert(`🏆🏆🏆 LÉGENDE ABSOLUE ! 🏆🏆🏆\n\nVous avez atteint le niveau LÉGENDES!\nRécompense ultime: €${reward.toLocaleString()}\n\nVous êtes maintenant une légende de la voile !`);
+                    } else if (this.level === 5) {
+                        alert(`🌍 CHAMPION DU MONDE ! 🌍\n\nPromotion: ${this.levelNames[this.level]}\nRécompense: €${reward.toLocaleString()}\n\nVous dominez la planète !`);
+                    } else if (this.level === 4) {
+                        alert(`⚡ SUPER ELITE ! ⚡\n\nPromotion: ${this.levelNames[this.level]}\nRécompense: €${reward.toLocaleString()}\n\nVous entrez dans l'élite absolue !`);
+                    } else {
+                        alert(`🎉 Promotion: ${this.levelNames[this.level]}!\nRécompense: €${reward.toLocaleString()}`);
+                    }
+                } else if (playerPosition >= 10 && this.level > 0) {
+                    this.level--;
+                    this.reputation = Math.max(0, this.reputation - 20);
+                    alert(`😔 Relégation: ${this.levelNames[this.level]}...\nIl faut se ressaisir !`);
+                }
+                
+                this.season++;
+                this.teams = this.generateTeams();
+                this.sponsorOffers = this.generateSponsorOffers();
+                this.initializeChampionship();
+                
+                document.getElementById('raceBtn').style.display = 'inline-block';
+                document.getElementById('seasonBtn').style.display = 'none';
+                document.getElementById('raceResults').innerHTML = '';
+                document.getElementById('raceSimulation').style.display = 'none';
+                
+                this.saveGame(); // SAUVEGARDE AUTOMATIQUE APRÈS SAISON
+                this.updateDisplay();
+            }
+
+            initializeChampionship() {
+                this.teams.forEach(team => team.points = 0);
+                this.raceCount = 0;
+            }
+
+            updateDisplay() {
+                document.getElementById('money').textContent = `€${this.money.toLocaleString()}`;
+                document.getElementById('passiveIncome').textContent = `€${this.getPassiveIncome().toLocaleString()}/saison`;
+                document.getElementById('reputation').textContent = this.reputation;
+                document.getElementById('season').textContent = this.season;
+                document.getElementById('levelIndicator').textContent = `Niveau ${this.levelNames[this.level]}`;
+                document.getElementById('selectedBoat').textContent = this.boats[this.selectedBoatIndex]?.name || "Aucun";
+                document.getElementById('currentSponsor').textContent = this.currentSponsor?.name || "Aucun";
+                
+                const boatsContainer = document.getElementById('boatsContainer');
+                boatsContainer.innerHTML = this.boats.map((boat, index) => `
+                    <div class="boat-card ${index === this.selectedBoatIndex ? 'selected' : ''}" 
+                         onclick="selectBoat(${index})" style="cursor: pointer; ${index === this.selectedBoatIndex ? 'border-left-color: #fdcb6e; background: #fff3e0;' : ''}">
+                        <div class="boat-name">${boat.name} (${boat.type.toUpperCase()})</div>
+                        <div class="boat-stats">
+                            <div class="boat-stat">Coque: ${Math.round(boat.coque)}</div>
+                            <div class="boat-stat">Voiles: ${Math.round(boat.voiles)}</div>
+                            <div class="boat-stat">Navigation: ${Math.round(boat.navigation)}</div>
+                            <div class="boat-stat">Électronique: ${Math.round(boat.electronique)}</div>
+                            <div class="boat-stat">Quille: ${Math.round(boat.quille)}</div>
+                            <div class="boat-stat">Mât: ${Math.round(boat.mat)}</div>
+                            <div class="boat-stat">Équipage: ${Math.round(boat.crew)}</div>
+                            <div class="boat-stat">Skipper: ${Math.round(boat.skipper)}</div>
+                        </div>
+                        <div style="text-align: center; margin-top: 8px;">
+                            <strong>Performance: ${Math.round(this.getBoatPerformance(boat))}/100</strong>
+                        </div>
+                    </div>
+                `).join('');
+                
+                const currentSponsorInfo = document.getElementById('currentSponsorInfo');
+                if (this.currentSponsor) {
+                    let progress = '';
+                    if (this.currentSponsor.type === "podiums") {
+                        progress = `Podiums: ${this.currentSponsor.podiums}/${this.currentSponsor.requirement}`;
+                    } else if (this.currentSponsor.type === "victories") {
+                        progress = `Victoires: ${this.currentSponsor.victories}/${this.currentSponsor.requirement}`;
+                    } else if (this.currentSponsor.type === "points") {
+                        const currentPoints = this.teams.find(t => t.isPlayer).points;
+                        progress = `Points: ${currentPoints}/${this.currentSponsor.requirement}`;
+                    } else {
+                        const currentPos = this.teams.sort((a, b) => b.points - a.points).findIndex(t => t.isPlayer) + 1;
+                        progress = `Position actuelle: ${currentPos}ème (objectif: top ${this.currentSponsor.requirement})`;
+                    }
+                    
+                    currentSponsorInfo.innerHTML = `
+                        <div class="sponsor-card current">
+                            <div class="sponsor-name">📋 Contrat Actuel: ${this.currentSponsor.name}</div>
+                            <div class="sponsor-objective">${this.currentSponsor.objective}</div>
+                            <div class="sponsor-reward">Reward: €${this.currentSponsor.reward.toLocaleString()}</div>
+                            <div style="font-size: 0.8em; margin-top: 5px;">${progress}</div>
+                        </div>
+                    `;
+                } else {
+                    currentSponsorInfo.innerHTML = '<p style="text-align: center; color: #636e72;">Aucun sponsor actuellement</p>';
+                }
+                
+                const sponsorOffers = document.getElementById('sponsorOffers');
+                sponsorOffers.innerHTML = this.sponsorOffers.map((sponsor, index) => `
+                    <div class="sponsor-card" onclick="selectSponsor(${index})">
+                        <div class="sponsor-name">${sponsor.name} (${sponsor.level.toUpperCase()})</div>
+                        <div class="sponsor-objective">${sponsor.objective}</div>
+                        <div class="sponsor-reward">€${sponsor.reward.toLocaleString()}</div>
+                    </div>
+                `).join('');
+                
+                const passiveRevenues = document.getElementById('passiveRevenues');
+                passiveRevenues.innerHTML = `
+                    <div class="revenue-item">
+                        <span>🛍️ Boutique (Niv.${this.passiveRevenues.merchandising})</span>
+                        <span class="money">€${(this.passiveRevenues.merchandising * 15000).toLocaleString()}</span>
+                    </div>
+                    <div class="revenue-item">
+                        <span>🎪 Événements (Niv.${this.passiveRevenues.events})</span>
+                        <span class="money">€${(this.passiveRevenues.events * 25000).toLocaleString()}</span>
+                    </div>
+                    <div class="revenue-item">
+                        <span>🎓 École Voile (Niv.${this.passiveRevenues.school})</span>
+                        <span class="money">€${(this.passiveRevenues.school * 35000).toLocaleString()}</span>
+                    </div>
+                `;
+                
+                const sortedTeams = [...this.teams].sort((a, b) => b.points - a.points);
+                const playerPosition = sortedTeams.findIndex(t => t.isPlayer) + 1;
+                document.getElementById('position').textContent = playerPosition;
+                
+                document.getElementById('championshipLevel').innerHTML = `
+                    <p><strong>Championnat ${this.levelNames[this.level]}</strong></p>
+                    <p>Course ${this.raceCount}/${this.maxRaces}</p>
+                    <p>Formation: Niv.${this.baseUpgrades.formation} | R&D: Niv.${this.baseUpgrades.recherche}</p>
+                `;
+                
+                const tableBody = document.getElementById('championshipTable');
+                tableBody.innerHTML = sortedTeams.map((team, index) => {
+                    let className = '';
+                    if (index < 3) className = 'promotion';
+                    else if (index >= 9) className = 'relegation';
+                    if (team.isPlayer) className += ' current-team';
+                    
+                    return `
+                        <tr class="${className}">
+                            <td>${index + 1}</td>
+                            <td>${team.name}</td>
+                            <td>${team.points}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            getBoatPerformance(boat) {
+                return (boat.coque + boat.voiles + boat.navigation + boat.electronique + 
+                       boat.quille + boat.mat + boat.crew + boat.skipper) / 8;
+            }
+        }
+
+        let game;
+
+        function startGame() {
+            game = new SailingTycoon();
+        }
+
+        function selectBoat(index) {
+            game.selectedBoatIndex = index;
+            game.updateDisplay();
+        }
+
+        function selectSponsor(index) {
+            if (game.currentSponsor) {
+                alert("Vous avez déjà un sponsor! Attendez la fin de saison.");
+                return;
+            }
+            game.selectSponsor(index);
+        }
+
+        function runRace() {
+            game.runRace();
+        }
+
+        function nextSeason() {
+            game.nextSeason();
+        }
+
+        function upgradeComponent(component) {
+            game.upgradeComponent(component);
+        }
+
+        function hireCrew(type) {
+            game.hireCrew(type);
+        }
+
+        function buyBoat(type) {
+            game.buyBoat(type);
+        }
+
+        function upgradeBase(type) {
+            game.upgradeBase(type);
+        }
+
+        function upgradeRevenue(type) {
+            game.upgradeRevenue(type);
+        }
+
+        function sellBoat(index) {
+            game.sellBoat(index);
+        }
+
+        function saveGameManually() {
+            game.saveGame();
+            alert("💾 Jeu sauvegardé manuellement!");
+        }
+
+        function resetGame() {
+            game.resetGame();
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
