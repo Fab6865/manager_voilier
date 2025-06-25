@@ -427,6 +427,9 @@
                     <h4>⚙️ Système</h4>
                     <div class="upgrade-grid">
                         <button class="btn" style="background: #636e72;" onclick="saveGameManually()">💾 Sauvegarder</button>
+                        <button class="btn" style="background: #00b894;" onclick="loadGameManually()">📁 Charger Partie</button>
+                        <button class="btn" style="background: #74b9ff;" onclick="exportSave()">📤 Exporter Sauvegarde</button>
+                        <button class="btn" style="background: #fd79a8;" onclick="importSave()">📥 Importer Sauvegarde</button>
                         <button class="btn" style="background: #d63031;" onclick="resetGame()">🔄 Nouvelle Partie</button>
                     </div>
                 </div>
@@ -522,14 +525,21 @@
                 // CHARGER LA SAUVEGARDE EN PREMIER
                 this.loadGame();
                 
+                // GÉNÉRER LES ÉQUIPES SEULEMENT SI PAS CHARGÉES
+                if (!this.teams || this.teams.length === 0) {
+                    console.log("Génération de nouvelles équipes...");
+                    this.teams = this.generateTeams();
+                } else {
+                    console.log("Équipes chargées depuis la sauvegarde:", this.teams.map(t => `${t.name}: ${t.points}pts`));
+                }
+                
                 this.sponsorOffers = this.generateSponsorOffers();
-                this.teams = this.generateTeams();
                 this.weather = this.generateWeather();
                 this.initializeChampionship();
                 this.updateDisplay();
             }
 
-            // SYSTÈME DE SAUVEGARDE
+            // SYSTÈME DE SAUVEGARDE CORRIGÉ
             saveGame() {
                 try {
                     const gameData = {
@@ -546,8 +556,15 @@
                         teams: this.teams
                     };
                     
-                    localStorage.setItem('sailingTycoonSave', JSON.stringify(gameData));
-                    console.log("Jeu sauvegardé avec succès!");
+                    // Essayer localStorage d'abord, puis fallback sur variable globale
+                    try {
+                        localStorage.setItem('sailingTycoonSave', JSON.stringify(gameData));
+                        console.log("Jeu sauvegardé dans localStorage!");
+                    } catch (localStorageError) {
+                        // Fallback pour les artifacts
+                        window.sailingTycoonSave = gameData;
+                        console.log("Jeu sauvegardé en mémoire (artifact mode)!");
+                    }
                 } catch (error) {
                     console.error("Erreur de sauvegarde:", error);
                 }
@@ -555,22 +572,38 @@
 
             loadGame() {
                 try {
-                    const savedData = localStorage.getItem('sailingTycoonSave');
+                    let savedData = null;
+                    
+                    // Essayer de charger depuis localStorage d'abord
+                    try {
+                        const localData = localStorage.getItem('sailingTycoonSave');
+                        if (localData) {
+                            savedData = JSON.parse(localData);
+                            console.log("Données chargées depuis localStorage");
+                        }
+                    } catch (localStorageError) {
+                        console.log("localStorage non disponible, utilisation du mode artifact");
+                    }
+                    
+                    // Fallback sur variable globale
+                    if (!savedData && window.sailingTycoonSave) {
+                        savedData = window.sailingTycoonSave;
+                        console.log("Données chargées depuis la mémoire");
+                    }
+                    
                     if (savedData) {
-                        const gameData = JSON.parse(savedData);
-                        
                         // Charger toutes les données
-                        this.money = gameData.money || 500000;
-                        this.reputation = gameData.reputation || 50;
-                        this.season = gameData.season || 1;
-                        this.level = gameData.level || 0;
-                        this.raceCount = gameData.raceCount || 0;
-                        this.selectedBoatIndex = gameData.selectedBoatIndex || 0;
-                        this.baseUpgrades = gameData.baseUpgrades || { formation: 0, recherche: 0, installations: 0 };
-                        this.passiveRevenues = gameData.passiveRevenues || { merchandising: 0, events: 0, school: 0 };
-                        this.currentSponsor = gameData.currentSponsor || null;
-                        this.boats = gameData.boats || this.boats;
-                        this.teams = gameData.teams || [];
+                        this.money = savedData.money || 500000;
+                        this.reputation = savedData.reputation || 50;
+                        this.season = savedData.season || 1;
+                        this.level = savedData.level || 0;
+                        this.raceCount = savedData.raceCount || 0;
+                        this.selectedBoatIndex = savedData.selectedBoatIndex || 0;
+                        this.baseUpgrades = savedData.baseUpgrades || { formation: 0, recherche: 0, installations: 0 };
+                        this.passiveRevenues = savedData.passiveRevenues || { merchandising: 0, events: 0, school: 0 };
+                        this.currentSponsor = savedData.currentSponsor || null;
+                        this.boats = savedData.boats || this.boats;
+                        this.teams = savedData.teams || [];
                         
                         console.log("Jeu chargé avec succès!");
                         console.log("Progression:", `Saison ${this.season}, Niveau ${this.levelNames[this.level]}, €${this.money.toLocaleString()}`);
@@ -585,7 +618,12 @@
 
             resetGame() {
                 if (confirm("⚠️ Êtes-vous sûr de vouloir recommencer une nouvelle partie ?\n\nToute votre progression sera perdue !")) {
-                    localStorage.removeItem('sailingTycoonSave');
+                    try {
+                        localStorage.removeItem('sailingTycoonSave');
+                    } catch (e) {
+                        console.log("localStorage non disponible");
+                    }
+                    window.sailingTycoonSave = null;
                     location.reload(); // Recharger la page pour redémarrer
                 }
             }
@@ -596,7 +634,6 @@
                     'coque': 75000, 'voiles': 85000, 'navigation': 45000,
                     'electronique': 65000, 'quille': 120000, 'mat': 150000
                 };
-                
                 const baseCost = baseCosts[component] || 75000;
                 const baseLevel = 50; // Niveau de départ
                 
@@ -1001,7 +1038,12 @@
                     if (participant.isPlayer) {
                         playerPosition = position;
                         playerPoints = points;
-                        this.teams.find(t => t.isPlayer).points += points;
+                        // AJOUT SÉCURISÉ DES POINTS
+                        const playerTeam = this.teams.find(t => t.isPlayer);
+                        if (playerTeam) {
+                            playerTeam.points += points;
+                            console.log(`Points ajoutés au joueur: ${points} (Total: ${playerTeam.points})`);
+                        }
                         
                         const levelMultiplier = [1, 1.5, 2, 3, 4, 6, 10][this.level] || 1;
                         const baseGain = position <= 6 ? (7 - position) * 5000 : 2000;
@@ -1020,12 +1062,24 @@
                             this.reputation += 1;
                         }
                     } else {
-                        this.teams.find(t => t.name === participant.name).points += points;
+                        // AJOUT SÉCURISÉ DES POINTS POUR LES IA
+                        const aiTeam = this.teams.find(t => t.name === participant.name);
+                        if (aiTeam) {
+                            aiTeam.points += points;
+                            console.log(`Points ajoutés à ${participant.name}: ${points} (Total: ${aiTeam.points})`);
+                        }
                     }
                 });
                 
+                // SAUVEGARDE IMMÉDIATE APRÈS ATTRIBUTION DES POINTS
+                console.log("Sauvegarde après course...");
+                this.saveGame();
+                
                 this.raceCount++;
                 this.displayRaceResult(playerPosition, playerPoints);
+                
+                // MISE À JOUR IMMÉDIATE DE L'AFFICHAGE
+                this.updateDisplay();
                 
                 if (this.raceCount >= this.maxRaces) {
                     document.getElementById('raceBtn').style.display = 'none';
@@ -1033,8 +1087,10 @@
                 }
                 
                 document.getElementById('raceBtn').disabled = false;
-                this.saveGame(); // SAUVEGARDE AUTOMATIQUE APRÈS COURSE
-                this.updateDisplay();
+                
+                // SAUVEGARDE FINALE SÉCURISÉE
+                console.log("Sauvegarde finale après course...");
+                this.saveGame();
             }
 
             sleep(ms) {
@@ -1144,8 +1200,7 @@
                 }
                 
                 this.season++;
-                // Ne pas régénérer les équipes pour conserver la progression
-                // this.teams = this.generateTeams();
+                this.teams = this.generateTeams();
                 this.sponsorOffers = this.generateSponsorOffers();
                 this.initializeChampionship();
                 
@@ -1331,7 +1386,218 @@
 
         function saveGameManually() {
             game.saveGame();
-            alert("💾 Jeu sauvegardé manuellement!");
+            // Afficher l'état détaillé de la sauvegarde
+            const playerTeam = game.teams.find(t => t.isPlayer);
+            const playerPoints = playerTeam ? playerTeam.points : 0;
+            const totalTeams = game.teams.length;
+            
+            alert(`💾 Jeu sauvegardé manuellement!
+            
+État actuel:
+- Saison: ${game.season}
+- Course: ${game.raceCount}/${game.maxRaces}
+- Points joueur: ${playerPoints}
+- Équipes: ${totalTeams}
+- Argent: €${game.money.toLocaleString()}
+
+Vérifiez la console pour plus de détails.`);
+            
+            console.log("État complet de la sauvegarde:", {
+                season: game.season,
+                raceCount: game.raceCount,
+                teams: game.teams.map(t => ({name: t.name, points: t.points, isPlayer: t.isPlayer})),
+                money: game.money
+            });
+        }
+
+        function loadGameManually() {
+            try {
+                let savedData = null;
+                
+                // Essayer de charger depuis localStorage
+                try {
+                    const localData = localStorage.getItem('sailingTycoonSave');
+                    if (localData) {
+                        savedData = JSON.parse(localData);
+                    }
+                } catch (e) {
+                    console.log("localStorage non disponible");
+                }
+                
+                // Fallback sur variable globale
+                if (!savedData && window.sailingTycoonSave) {
+                    savedData = window.sailingTycoonSave;
+                }
+                
+                if (savedData) {
+                    // Sauvegarder l'état actuel avant de charger
+                    const currentState = {
+                        money: game.money,
+                        reputation: game.reputation,
+                        season: game.season,
+                        level: game.level,
+                        raceCount: game.raceCount,
+                        selectedBoatIndex: game.selectedBoatIndex,
+                        baseUpgrades: game.baseUpgrades,
+                        passiveRevenues: game.passiveRevenues,
+                        currentSponsor: game.currentSponsor,
+                        boats: game.boats,
+                        teams: game.teams
+                    };
+                    
+                    // Charger les données
+                    game.money = savedData.money || 500000;
+                    game.reputation = savedData.reputation || 50;
+                    game.season = savedData.season || 1;
+                    game.level = savedData.level || 0;
+                    game.raceCount = savedData.raceCount || 0;
+                    game.selectedBoatIndex = savedData.selectedBoatIndex || 0;
+                    game.baseUpgrades = savedData.baseUpgrades || { formation: 0, recherche: 0, installations: 0 };
+                    game.passiveRevenues = savedData.passiveRevenues || { merchandising: 0, events: 0, school: 0 };
+                    game.currentSponsor = savedData.currentSponsor || null;
+                    game.boats = savedData.boats || game.boats;
+                    game.teams = savedData.teams || [];
+                    
+                    // Régénérer si nécessaire
+                    if (!game.teams || game.teams.length === 0) {
+                        game.teams = game.generateTeams();
+                    }
+                    
+                    game.sponsorOffers = game.generateSponsorOffers();
+                    game.updateDisplay();
+                    
+                    const playerTeam = game.teams.find(t => t.isPlayer);
+                    const playerPoints = playerTeam ? playerTeam.points : 0;
+                    
+                    alert(`📁 Partie chargée avec succès!
+                    
+État chargé:
+- Saison: ${game.season}
+- Course: ${game.raceCount}/${game.maxRaces}
+- Points joueur: ${playerPoints}
+- Niveau: ${game.levelNames[game.level]}
+- Argent: €${game.money.toLocaleString()}
+
+${playerPoints > 0 ? '✅ Vos points de championnat ont été restaurés!' : ''}`);
+                    
+                } else {
+                    alert("❌ Aucune sauvegarde trouvée!\n\nUtilisez 'Sauvegarder' d'abord ou 'Importer Sauvegarde' si vous avez un fichier de sauvegarde.");
+                }
+            } catch (error) {
+                console.error("Erreur lors du chargement:", error);
+                alert("❌ Erreur lors du chargement de la partie!");
+            }
+        }
+
+        function exportSave() {
+            try {
+                const gameData = {
+                    money: game.money,
+                    reputation: game.reputation,
+                    season: game.season,
+                    level: game.level,
+                    raceCount: game.raceCount,
+                    selectedBoatIndex: game.selectedBoatIndex,
+                    baseUpgrades: game.baseUpgrades,
+                    passiveRevenues: game.passiveRevenues,
+                    currentSponsor: game.currentSponsor,
+                    boats: game.boats,
+                    teams: game.teams,
+                    timestamp: new Date().toISOString()
+                };
+                
+                const saveString = JSON.stringify(gameData, null, 2);
+                const blob = new Blob([saveString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sailing_tycoon_save_saison${game.season}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert(`📤 Sauvegarde exportée!
+                
+Fichier: sailing_tycoon_save_saison${game.season}.json
+Gardez ce fichier précieusement pour pouvoir restaurer votre progression!`);
+                
+            } catch (error) {
+                console.error("Erreur d'export:", error);
+                alert("❌ Erreur lors de l'export de la sauvegarde!");
+            }
+        }
+
+        function importSave() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const savedData = JSON.parse(e.target.result);
+                        
+                        // Vérifier que c'est bien une sauvegarde valide
+                        if (!savedData.money && !savedData.season && !savedData.boats) {
+                            alert("❌ Fichier de sauvegarde invalide!");
+                            return;
+                        }
+                        
+                        // Charger les données
+                        game.money = savedData.money || 500000;
+                        game.reputation = savedData.reputation || 50;
+                        game.season = savedData.season || 1;
+                        game.level = savedData.level || 0;
+                        game.raceCount = savedData.raceCount || 0;
+                        game.selectedBoatIndex = savedData.selectedBoatIndex || 0;
+                        game.baseUpgrades = savedData.baseUpgrades || { formation: 0, recherche: 0, installations: 0 };
+                        game.passiveRevenues = savedData.passiveRevenues || { merchandising: 0, events: 0, school: 0 };
+                        game.currentSponsor = savedData.currentSponsor || null;
+                        game.boats = savedData.boats || game.boats;
+                        game.teams = savedData.teams || [];
+                        
+                        // Sauvegarder dans le système actuel
+                        game.saveGame();
+                        
+                        // Régénérer si nécessaire
+                        if (!game.teams || game.teams.length === 0) {
+                            game.teams = game.generateTeams();
+                        }
+                        
+                        game.sponsorOffers = game.generateSponsorOffers();
+                        game.updateDisplay();
+                        
+                        const playerTeam = game.teams.find(t => t.isPlayer);
+                        const playerPoints = playerTeam ? playerTeam.points : 0;
+                        const saveDate = savedData.timestamp ? new Date(savedData.timestamp).toLocaleDateString() : 'Inconnue';
+                        
+                        alert(`📥 Sauvegarde importée avec succès!
+                        
+État restauré:
+- Date sauvegarde: ${saveDate}
+- Saison: ${game.season}
+- Course: ${game.raceCount}/${game.maxRaces}
+- Points joueur: ${playerPoints}
+- Niveau: ${game.levelNames[game.level]}
+- Argent: €${game.money.toLocaleString()}
+
+${playerPoints > 0 ? '✅ Vos points de championnat ont été restaurés!' : ''}`);
+                        
+                    } catch (error) {
+                        console.error("Erreur d'import:", error);
+                        alert("❌ Erreur lors de l'import: fichier corrompu ou invalide!");
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
         }
 
         function resetGame() {
